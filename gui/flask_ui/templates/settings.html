@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Settings</title>
+  <!-- Default retro style -->
+  <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='style_retro.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='fonts.css') }}">
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;   /* align to left */
+      justify-content: flex-start; /* align to top */
+      padding: 20px;
+    }
+    .settings-container {
+      max-width: 400px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    .top-bar {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+    }
+    .back-btn {
+      border: none;
+      background: transparent;
+      color: inherit;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 8px;
+      transition: transform 0.2s ease;
+    }
+    .back-btn:hover {
+      transform: scale(1.1);
+      text-decoration: underline;
+    }
+    label {
+      display: block;
+      margin: 12px 0 6px;
+    }
+    select {
+        width: 100%;
+        padding: 8px;
+        border-radius: 6px;
+        border: 2px solid currentColor;
+        background-color: var(--dropdown-bg, #000); /* fallback retro black */
+        color: inherit; /* inherit text color from theme */
+    }
+
+    select, button, .back-btn {
+        font-family: inherit;
+        }
+  </style>
+</head>
+<body>
+  <!-- Top bar with Back to Chat -->
+  <div class="top-bar">
+    <button class="back-btn" onclick="goBack()">Back to Chat</button>
+  </div>
+
+  <div class="settings-container">
+    <h2>Settings</h2>
+    <label for="theme-select">Choose Theme:</label>
+    <select id="theme-select">
+      <option value="style_retro.css">Retro</option>
+      <option value="style_minimal_light.css">Minimal Light</option>
+      <option value="style_midnight_neon.css">Midnight Neon</option>
+      <option value="style_pastel_glass.css">Pastel Glassmorphism</option>
+      <option value="style_solarized_dark.css">Solarized Dark</option>
+      <option value="style_amoled.css">AMOLED Minimal</option>
+    </select>
+
+      <!-- Model selector -->
+    <label for="model-select">Choose Model:</label>
+    <select id="model-select">
+      <option value="llava:7b">LLaVA 7B</option>
+      <option value="llava:13b">LLaVA 13B</option>
+      <option value="llama2:7b">LLaMA2 7B</option>
+      <option value="llama2:13b">LLaMA2 13B</option>
+    </select>
+  </div>
+  <script>
+    const themeSelect = document.getElementById("theme-select");
+    const themeLink = document.getElementById("theme-link");
+    const modelSelect = document.getElementById("model-select");
+
+    // Restore saved theme
+    const savedTheme = localStorage.getItem("selectedTheme");
+    if (savedTheme) {
+      themeLink.href = `/static/${savedTheme}`;
+      themeSelect.value = savedTheme;
+    }
+
+    // Change theme instantly on selection
+    themeSelect.addEventListener("change", () => {
+      const selectedTheme = themeSelect.value;
+      themeLink.href = `/static/${selectedTheme}`;
+      localStorage.setItem("selectedTheme", selectedTheme);
+    });
+
+    // Restore saved model
+    const savedModel = localStorage.getItem("selectedModel");
+    if (savedModel) {
+      modelSelect.value = savedModel;
+    }
+
+    modelSelect.addEventListener("change", () => {
+      const selectedModel = modelSelect.value;
+      localStorage.setItem("selectedModel", selectedModel);
+
+      // Send to backend
+      fetch("/set_model", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model: selectedModel })
+      }).then(res => res.json())
+        .then(data => console.log("Model updated:", data));
+    });
+
+    function goBack() {
+      window.location.href = "/"; // navigate back to main chat app
+    }
+  </script>
+</body>
+</html>

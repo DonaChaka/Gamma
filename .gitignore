@@ -1,0 +1,18 @@
+# Virtual environment
+.venv/
+
+# VSCode settings
+.vscode/
+
+# SQLite history database
+history/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build artifacts
+*.log
+*.tmp

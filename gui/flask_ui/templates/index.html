@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gamma</title>
+
+  <!-- Dynamic theme stylesheet -->
+  <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='style_retro.css') }}">
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='fonts.css') }}">
+  <!-- Fonts for all themes
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"> -->
+
+  <!-- Material Symbols -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+
+  <!-- MathJax -->
+  <script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$', '$$'], ['\\[', '\\]']]
+    }
+  };
+  </script>
+  <script src="{{ url_for('static', filename='mathjax/tex-mml-chtml.js') }}"></script>
+
+  <style>
+    .top-controls {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .settings-icon,
+    .clear-icon,
+    .voice-icon {
+      cursor: pointer;
+      font-size: 22px;
+      color: #ffcc00;
+      transition: transform 0.2s ease;
+    }
+
+    .settings-icon:hover,
+    .clear-icon:hover,
+    .voice-icon:hover {
+      transform: scale(1.2);
+    }
+
+    .voice-on {
+      color: #00cc66; /* green when active */
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <h2>
+      Gamma <span class="gamma-symbol">&#x0393;</span>
+    </h2>
+
+    <!-- Top-right controls-->
+    <div class="top-controls">
+      <span class="material-symbols-outlined settings-icon" onclick="openSettings()">settings</span>
+      <span class="material-symbols-outlined clear-icon" onclick="clearChat()">delete</span>
+      <span class="material-symbols-outlined voice-icon" onclick="toggleReadAloud()">volume_up</span>
+    </div>
+   
+    <div id="chat-box"></div>
+    
+    <!-- Loader -->
+    <div id="loader" class="loader" style="display:none;">
+    <span class="gamma-symbol">&#x0393;</span> is typing<span class="dots"></span>
+    </div>
+
+    <div class="input-area">
+      <input type="text" id="user-input" placeholder="Type your message..." autofocus>
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    async function sendMessage() {
+      const input = document.getElementById("user-input");
+      const message = input.value.trim();
+      if (!message) return;
+      input.value = "";
+
+      const chatBox = document.getElementById("chat-box");
+      const loader = document.getElementById("loader");
+
+      chatBox.innerHTML += `<div class="user">${message}</div>`;
+      setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 0);
+
+      loader.style.display = "block";
+
+      const response = await fetch("/chat", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({message})
+      });
+      const data = await response.json();
+
+      loader.style.display = "none";
+
+      chatBox.innerHTML += `
+        <div class="ai">
+          <div class="ai-text">
+            <span class="gamma-symbol">&#x0393;:</span> ${data.reply}
+          </div>
+          <button class="copy-btn" data-reply="${encodeURIComponent(data.reply)}" onclick="copyResponse(this)">
+            <span class="material-symbols-outlined">content_copy</span>
+          </button>
+        </div>
+      `;
+      setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 0);
+
+      if (window.MathJax) MathJax.typesetPromise();
+
+      // 🔊 Speak the reply if toggle is ON
+      speakText(data.reply);
+
+    }
+
+    function copyResponse(btnElement) {
+      const rawText = decodeURIComponent(btnElement.getAttribute("data-reply"));
+      navigator.clipboard.writeText(rawText).then(() => {
+        btnElement.querySelector(".material-symbols-outlined").textContent = "done";
+        setTimeout(() => {
+          btnElement.querySelector(".material-symbols-outlined").textContent = "content_copy";
+        }, 1500);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const input = document.getElementById("user-input");
+      input.addEventListener("keydown", function(event) {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          sendMessage();
+        }
+      });
+
+      // Restore saved theme
+      const themeLink = document.getElementById("theme-link");
+      const savedTheme = localStorage.getItem("selectedTheme");
+      if (savedTheme) {
+        themeLink.href = `/static/${savedTheme}`;
+      }
+
+      // Load chat history from backend
+      const chatBox = document.getElementById("chat-box");
+      fetch("/history")
+        .then(res => res.json())
+        .then(history => {
+          history.forEach(msg => {
+            const div = document.createElement("div");
+            div.className = msg.role;  // "user" or "ai"
+            if (msg.role === "ai") {
+              div.innerHTML = `
+                <div class="ai-text">
+                  <span class="gamma-symbol">&#x0393;:</span> ${msg.text}
+                </div>
+                <button class="copy-btn" data-reply="${encodeURIComponent(msg.text)}" onclick="copyResponse(this)">
+                  <span class="material-symbols-outlined">content_copy</span>
+                </button>
+              `;
+            } else {
+              div.className = "user";
+              div.textContent = msg.text;
+            }
+            chatBox.appendChild(div);
+          });
+          setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 0);
+          if (window.MathJax) MathJax.typesetPromise();
+        });
+    });
+
+    function openSettings() {
+      window.location.href = "/settings"; // navigate to settings page
+    }
+
+    // Clear chat history
+    async function clearChat() {
+      const chatBox = document.getElementById("chat-box");
+      const response = await fetch("/clear_history", { method: "POST" });
+      const data = await response.json();
+      if (data.status === "success") {
+        chatBox.innerHTML = ""; // wipe UI
+      }
+    }
+
+    let readAloudEnabled = false;
+
+    function toggleReadAloud() {
+      const voiceIcon = document.querySelector(".voice-icon");
+      readAloudEnabled = !readAloudEnabled;
+      if (readAloudEnabled) {
+        voiceIcon.classList.add("voice-on");
+      } else {
+        voiceIcon.classList.remove("voice-on");
+        speechSynthesis.cancel(); // stop any ongoing speech
+      }
+    }
+
+    function speakText(text) {
+      if (!readAloudEnabled) return;
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US"; // or "en-IN" for Indian English
+      utterance.rate = 1;
+      utterance.pitch = 1;
+
+      const voices = speechSynthesis.getVoices();
+      const preferred = voices.find(v => v.name.includes("Google") || v.name.includes("Microsoft"));
+      if (preferred) {
+        utterance.voice = preferred;
+      }
+
+      speechSynthesis.speak(utterance);
+    }
+
+  </script>
+</body>
+</html>
