@@ -1,0 +1,103 @@
+/* Scientific aesthetic theme */
+body {
+    font-family: 'Roboto Mono', monospace;
+    background: #000000; /* deep navy */
+    color: #e0f7fa;      /* pale cyan text */
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    height: 100vh;
+    margin: 0;
+}
+
+.chat-container {
+    flex: 1;
+    max-width: 500px;
+    display: flex;
+    flex-direction: column;
+    background: #000000; /* dark blue panel */
+    border: 2px solid #29b6f6; /* cyan border */
+    box-shadow: 0 0 25px rgba(41,182,246,0.6);
+    padding: 20px;
+}
+
+.gamma-symbol {
+    color: #ff7043; /* scientific orange accent */
+    text-shadow: 0 0 8px #ff7043;
+    margin-left: 4px;
+    font-size: 1.1em;
+}
+
+h2 {
+    text-align: center;
+    margin: 0 0 15px 0;
+    font-size: 1.4em;
+    color: #29b6f6;
+    text-shadow: 0 0 10px #29b6f6;
+    font-family: 'Roboto Mono', monospace;
+}
+
+#chat-box {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px dashed #29b6f6;
+    padding: 10px;
+    background: #000000;
+    font-size: 15px;
+    line-height: 1.5;
+    margin-bottom: 10px;
+    color: #e0f7fa;
+}
+
+.user {
+    text-align: right;
+    color: #ffcc80; /* warm amber */
+    margin: 5px 0 1em 0;
+    font-weight: bold;
+}
+
+.ai {
+    margin: 5px 0 2em 0;
+    padding-right: 28px;
+    color: #80deea; /* light cyan */
+}
+
+.loader {
+    color: #ff7043;
+    font-family: 'Roboto Mono', monospace;
+    text-align: center;
+    margin: 8px 0;
+}
+
+.input-area {
+    display: flex;
+}
+
+input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #29b6f6;
+    background: #0d2538;
+    color: #e0f7fa;
+    font-family: 'Roboto Mono', monospace;
+}
+
+button {
+    padding: 10px 15px;
+    border: 1px solid #ff7043;
+    background: #0d2538;
+    color: #ff7043;
+    cursor: pointer;
+    font-family: 'Roboto Mono', monospace;
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+button:hover {
+    background: #ff7043;
+    color: #0d2538;
+}
+
+mjx-container {
+    color: #29b6f6;
+    font-size: 1.1em;
+}

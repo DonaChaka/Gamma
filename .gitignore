@@ -16,3 +16,9 @@ __pycache__/
 # Build artifacts
 *.log
 *.tmp
+build/
+dist/
+
+# Git files
+*.git
+.gitignore

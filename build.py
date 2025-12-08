@@ -25,6 +25,9 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 build_dir = os.path.join(current_dir, "build")
 dist_dir = os.path.join(current_dir, "dist")
 icon_path = os.path.join(current_dir, "icons", "gamma.ico")
+templates_path = os.path.join(current_dir, "gui", "flask_ui", "templates")
+static_path = os.path.join(current_dir, "gui", "flask_ui", "static")
+
 spec_path = build_dir
 
 # Ensure the build and dist folder exists
@@ -39,15 +42,18 @@ if not os.path.exists(dist_dir):
 # -w: Disable the terminal window (use -c for console apps)
 command = [
     "pyinstaller",
-    "--distpath", dist_dir,  # Place the executable in the dist folder
-    "--workpath", build_dir,  # Temporary files location
-    "--specpath", spec_path,  # Path to save the spec file
-    "--name", executable_name,  # Name the executable
-    "--windowed",  # No console window
-    "--strip",  # Strip unnecessary symbols
-    "--icon", icon_path,  # Path to the icon file
-    script_name  # The Python script to convert
+    "--distpath", dist_dir,
+    "--workpath", build_dir,
+    "--specpath", spec_path,
+    "--name", executable_name,
+    "--windowed",
+    "--strip",
+    "--icon", icon_path,
+    "--add-data", f"{templates_path};gui/flask_ui/templates",
+    "--add-data", f"{static_path};gui/flask_ui/static",
+    script_name
 ]
+
 
 # Run the PyInstaller command
 try:
