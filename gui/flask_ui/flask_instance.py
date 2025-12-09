@@ -1,10 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, Response
+import json
 import threading
 from ollama.run_ollama import OllamaClient
 from store.db import init_db, add_message, get_history, clear_history
 
 app = Flask(__name__)
-ollama_client = OllamaClient()
+ollama_client = OllamaClient(model_name="qwen3-vl:2b-instruct")
 ollama_client.start()
 
 # Initialize database on startup
@@ -19,33 +20,21 @@ def chat():
     data = request.get_json()
     prompt = data.get("message", "")
 
-    '''Contextual chat history (currently disabled). 
-    LLava:7b couldn't respond for current screen correctly. 
-    But the code is here if needed in the future. Try for other models.
-    
-    history = get_history(limit=20)  # get last 20 messages
-    context = "\n".join([f"{m['role']}: {m['text']}" for m in history])
-    full_prompt = f"{context}\nuser: {prompt}\nassistant:"
-
-    Pass full_prompt to thread (ollama) instead of prompt.
-    '''
-
-    response_chunks = []
-    def update_callback(chunk):
-        response_chunks.append(chunk)
-
-    # Run ask_model in a separate thread so Flask doesn’t block
-    thread = threading.Thread(target=ollama_client.ask, args=(prompt, update_callback))
-    thread.start()
-    thread.join()  # wait until streaming finishes
-
-    # Combine chunks into one string
-    final_response = "".join(response_chunks)
-
+    # Save user message immediately
     add_message("user", prompt)
-    add_message("ai", final_response)
 
-    return jsonify({"reply": final_response})
+    def generate():
+        response_chunks = []
+        for chunk in ollama_client.ask(prompt):
+            response_chunks.append(chunk)
+            # Stream each chunk to client as SSE
+            yield f"data: {json.dumps({'response': chunk})}\n\n"
+
+        # After streaming completes, save final response
+        final_response = "".join(response_chunks)
+        add_message("ai", final_response)
+
+    return Response(generate(), mimetype="text/event-stream")
 
 @app.route("/history")
 def history():

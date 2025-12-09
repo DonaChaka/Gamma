@@ -4,30 +4,25 @@
   <meta charset="UTF-8">
   <title>Gamma</title>
 
-  <!-- Dynamic theme stylesheet -->
+  <!-- Theme stylesheet -->
   <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='style_retro.css') }}">
-
   <link rel="stylesheet" href="{{ url_for('static', filename='fonts.css') }}">
-  <!-- Fonts for all themes
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet"> -->
 
   <!-- Material Symbols -->
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
 
-  <!-- MathJax -->
+  <!-- MathJax configuration -->
   <script>
-  window.MathJax = {
-    tex: {
-      inlineMath: [['$', '$'], ['\\(', '\\)']],
-      displayMath: [['$$', '$$'], ['\\[', '\\]']]
-    }
-  };
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']]
+      },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre'] }
+    };
   </script>
   <script src="{{ url_for('static', filename='mathjax/tex-mml-chtml.js') }}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
   <style>
     .top-controls {
@@ -37,7 +32,6 @@
       display: flex;
       gap: 12px;
     }
-
     .settings-icon,
     .clear-icon,
     .voice-icon {
@@ -46,13 +40,11 @@
       color: #ffcc00;
       transition: transform 0.2s ease;
     }
-
     .settings-icon:hover,
     .clear-icon:hover,
     .voice-icon:hover {
       transform: scale(1.2);
     }
-
     .voice-on {
       color: #00cc66; /* green when active */
     }
@@ -64,27 +56,30 @@
       Gamma <span class="gamma-symbol">&#x0393;</span>
     </h2>
 
-    <!-- Top-right controls-->
+    <!-- Top-right controls -->
     <div class="top-controls">
       <span class="material-symbols-outlined settings-icon" onclick="openSettings()">settings</span>
       <span class="material-symbols-outlined clear-icon" onclick="clearChat()">delete</span>
       <span class="material-symbols-outlined voice-icon" onclick="toggleReadAloud()">volume_up</span>
     </div>
    
+    <!-- Chat area -->
     <div id="chat-box"></div>
     
     <!-- Loader -->
     <div id="loader" class="loader" style="display:none;">
-    <span class="gamma-symbol">&#x0393;</span> is typing<span class="dots"></span>
+      <span class="gamma-symbol">&#x0393;</span> is typing<span class="dots"></span>
     </div>
 
+    <!-- Input area -->
     <div class="input-area">
-      <input type="text" id="user-input" placeholder="Type your message..." autofocus>
+      <input type="text" id="user-input" placeholder="Ask gamma..." autofocus>
       <button onclick="sendMessage()">Send</button>
     </div>
   </div>
 
   <script>
+    // Handle sending user messages and streaming AI responses
     async function sendMessage() {
       const input = document.getElementById("user-input");
       const message = input.value.trim();
@@ -94,39 +89,68 @@
       const chatBox = document.getElementById("chat-box");
       const loader = document.getElementById("loader");
 
+      // Show user message immediately
       chatBox.innerHTML += `<div class="user">${message}</div>`;
       setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 0);
 
       loader.style.display = "block";
 
+      // Create AI message container
+      const aiDiv = document.createElement("div");
+      aiDiv.className = "ai";
+      aiDiv.innerHTML = `
+        <div class="ai-text">
+          <span class="gamma-symbol">&#x0393;:</span> <span class="streaming-text"></span>
+        </div>
+        <button class="copy-btn" data-reply="" onclick="copyResponse(this)">
+          <span class="material-symbols-outlined">content_copy</span>
+        </button>
+      `;
+      chatBox.appendChild(aiDiv);
+      const streamingSpan = aiDiv.querySelector(".streaming-text");
+      const copyBtn = aiDiv.querySelector(".copy-btn");
+
+      // Fetch streaming response from backend
       const response = await fetch("/chat", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({message})
       });
-      const data = await response.json();
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let fullText = "";
+
+      // Read streamed chunks and update UI
+      while (true) {
+        const {done, value} = await reader.read();
+        if (done) break;
+        const chunk = decoder.decode(value, {stream: true});
+        chunk.split("\n").forEach(line => {
+          if (line.startsWith("data:")) {
+            try {
+              const data = JSON.parse(line.slice(5));
+              if (data.response) {
+                fullText += data.response;
+                streamingSpan.innerHTML = marked.parse(fullText);
+                setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 0);
+              }
+            } catch (e) {}
+          }
+        });
+      }
 
       loader.style.display = "none";
+      copyBtn.setAttribute("data-reply", encodeURIComponent(fullText));
 
-      chatBox.innerHTML += `
-        <div class="ai">
-          <div class="ai-text">
-            <span class="gamma-symbol">&#x0393;:</span> ${data.reply}
-          </div>
-          <button class="copy-btn" data-reply="${encodeURIComponent(data.reply)}" onclick="copyResponse(this)">
-            <span class="material-symbols-outlined">content_copy</span>
-          </button>
-        </div>
-      `;
-      setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 0);
-
+      // Render LaTeX if present
       if (window.MathJax) MathJax.typesetPromise();
 
-      // 🔊 Speak the reply if toggle is ON
-      speakText(data.reply);
-
+      // Speak response if voice toggle is enabled
+      speakText(fullText);
     }
 
+    // Copy AI response to clipboard
     function copyResponse(btnElement) {
       const rawText = decodeURIComponent(btnElement.getAttribute("data-reply"));
       navigator.clipboard.writeText(rawText).then(() => {
@@ -137,6 +161,7 @@
       });
     }
 
+    // Initialize page on load
     document.addEventListener("DOMContentLoaded", () => {
       const input = document.getElementById("user-input");
       input.addEventListener("keydown", function(event) {
@@ -153,18 +178,31 @@
         themeLink.href = `/static/${savedTheme}`;
       }
 
-      // Load chat history from backend
       const chatBox = document.getElementById("chat-box");
+
+       // 🔥 Intro line as first AI message
+      const introDiv = document.createElement("div");
+      introDiv.className = "ai";
+      introDiv.innerHTML = `
+        <div class="ai-text">
+          <span class="gamma-symbol">&#x0393;:</span> I can see everything....
+        </div>
+      `;
+      chatBox.appendChild(introDiv);
+
+
+      // Load chat history from backend
       fetch("/history")
         .then(res => res.json())
         .then(history => {
           history.forEach(msg => {
             const div = document.createElement("div");
-            div.className = msg.role;  // "user" or "ai"
+            div.className = msg.role;
             if (msg.role === "ai") {
+              const formattedText = marked.parse(msg.text);
               div.innerHTML = `
                 <div class="ai-text">
-                  <span class="gamma-symbol">&#x0393;:</span> ${msg.text}
+                  <span class="gamma-symbol">&#x0393;:</span> ${formattedText}
                 </div>
                 <button class="copy-btn" data-reply="${encodeURIComponent(msg.text)}" onclick="copyResponse(this)">
                   <span class="material-symbols-outlined">content_copy</span>
@@ -181,8 +219,9 @@
         });
     });
 
+    // Navigate to settings page
     function openSettings() {
-      window.location.href = "/settings"; // navigate to settings page
+      window.location.href = "/settings";
     }
 
     // Clear chat history
@@ -191,12 +230,12 @@
       const response = await fetch("/clear_history", { method: "POST" });
       const data = await response.json();
       if (data.status === "success") {
-        chatBox.innerHTML = ""; // wipe UI
+        chatBox.innerHTML = "";
       }
     }
 
+    // Toggle voice read-aloud
     let readAloudEnabled = false;
-
     function toggleReadAloud() {
       const voiceIcon = document.querySelector(".voice-icon");
       readAloudEnabled = !readAloudEnabled;
@@ -204,15 +243,16 @@
         voiceIcon.classList.add("voice-on");
       } else {
         voiceIcon.classList.remove("voice-on");
-        speechSynthesis.cancel(); // stop any ongoing speech
+        speechSynthesis.cancel();
       }
     }
 
+    // Speak AI response using browser TTS
     function speakText(text) {
-      if (!readAloudEnabled) return;
+      if (!readAloudEnabled || !text) return;
 
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "en-US"; // or "en-IN" for Indian English
+      utterance.lang = "en-US";
       utterance.rate = 1;
       utterance.pitch = 1;
 
@@ -224,7 +264,6 @@
 
       speechSynthesis.speak(utterance);
     }
-
   </script>
 </body>
 </html>

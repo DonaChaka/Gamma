@@ -6,7 +6,7 @@ import json
 from utils.capture_screenshot import capture_screenshot
 
 class OllamaClient:
-    def __init__(self, model_name="llava:7b", url="http://localhost:11434/api/generate"):
+    def __init__(self, model_name="qwen3-vl:2b-instruct", url="http://localhost:11434/api/generate"):
         self.model_name = model_name
         self.url = url
 
@@ -32,22 +32,24 @@ class OllamaClient:
         )
         return True
 
-    def ask(self, prompt, update_callback):
-        """Send prompt + screenshot to Ollama and stream response."""
-        image_data = capture_screenshot()
-        image_base64 = base64.b64encode(image_data).decode("utf-8")
+    def ask(self, prompt, include_image=True):
+        """Send prompt (+ optional screenshot) to Ollama and yield streamed response chunks."""
+        image_data = capture_screenshot() if include_image else None
+        image_base64 = base64.b64encode(image_data).decode("utf-8") if image_data else None
 
         payload = {
             "model": self.model_name,
             "prompt": prompt,
-            "images": [image_base64]
         }
+        if image_base64:
+            payload["images"] = [image_base64]
 
         response = requests.post(self.url, json=payload, stream=True)
         for line in response.iter_lines():
             if line:
                 try:
                     chunk = json.loads(line.decode("utf-8"))
-                    update_callback(chunk.get("response", ""))
+                    if chunk.get("response"):
+                        yield chunk["response"]   # <-- generator yields each token
                 except Exception:
-                    pass
+                    continue
