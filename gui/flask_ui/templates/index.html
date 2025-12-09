@@ -24,43 +24,8 @@
   <script src="{{ url_for('static', filename='mathjax/tex-mml-chtml.js') }}"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-  <style>
-    .top-controls {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      display: flex;
-      gap: 12px;
-    }
-    .settings-icon,
-    .clear-icon,
-    .voice-icon {
-      cursor: pointer;
-      font-size: 22px;
-      color: #ffcc00;
-      transition: transform 0.2s ease;
-    }
-    .settings-icon:hover,
-    .clear-icon:hover,
-    .voice-icon:hover {
-      transform: scale(1.2);
-    }
-    #stop-btn {
-      margin-left: 10px;
-      padding: 4px 8px;
-      background: #ff4444;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    #stop-btn:hover {
-      background: #cc0000;
-    }
-    .voice-on {
-      color: #00cc66; /* green when active */
-    }
-  </style>
+  <!-- Page-specific styles -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='style_index.css') }}">
 </head>
 <body>
   <div class="chat-container">
@@ -70,15 +35,31 @@
 
     <!-- Top-right controls -->
     <div class="top-controls">
-      <span class="material-symbols-outlined settings-icon" onclick="openSettings()">settings</span>
-      <span class="material-symbols-outlined clear-icon" onclick="clearChat()">delete</span>
-      <span class="material-symbols-outlined voice-icon" onclick="toggleReadAloud()">volume_up</span>
+      <div class="tooltip">
+        <span class="material-symbols-outlined screen-icon" onclick="toggleScreen()">desktop_windows</span>
+        <span class="tooltiptext">Screen share</span>
+      </div>
+
+      <div class="tooltip">
+        <span class="material-symbols-outlined clear-icon" onclick="clearChat()">delete</span>
+        <span class="tooltiptext">Clear chat</span>
+      </div>
+
+      <div class="tooltip">
+        <span class="material-symbols-outlined voice-icon" onclick="toggleReadAloud()">volume_up</span>
+        <span class="tooltiptext">Read aloud</span>
+      </div>
+
+      <div class="tooltip">
+        <span class="material-symbols-outlined settings-icon" onclick="openSettings()">settings</span>
+        <span class="tooltiptext">Settings</span>
+      </div>
     </div>
    
     <!-- Chat area -->
     <div id="chat-box"></div>
     
-    <!-- Loader + Stop button -->
+    <!-- Loader -->
     <div id="loader" class="loader" style="display:none;">
       <span class="gamma-symbol">&#x0393;</span> is typing<span class="dots"></span>
       <button id="stop-btn" onclick="stopChat()" style="display:none;">Stop</button>
@@ -91,207 +72,10 @@
     </div>
   </div>
 
-  <script>
-    let stopStreaming = false; // global flag
-
-    // Handle sending user messages and streaming AI responses
-    async function sendMessage() {
-      stopStreaming = false;
-      const input = document.getElementById("user-input");
-      const message = input.value.trim();
-      if (!message) return;
-      input.value = "";
-
-      const chatBox = document.getElementById("chat-box");
-      const loader = document.getElementById("loader");
-      const stopBtn = document.getElementById("stop-btn");
-
-      // Show user message immediately
-      chatBox.innerHTML += `<div class="user">${message}</div>`;
-      setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 0);
-
-      loader.style.display = "block";
-      stopBtn.style.display = "inline-block";
-
-      // Create AI message container
-      const aiDiv = document.createElement("div");
-      aiDiv.className = "ai";
-      aiDiv.innerHTML = `
-        <div class="ai-text">
-          <span class="gamma-symbol">&#x0393;:</span> <span class="streaming-text"></span>
-        </div>
-        <button class="copy-btn" data-reply="" onclick="copyResponse(this)">
-          <span class="material-symbols-outlined">content_copy</span>
-        </button>
-      `;
-      chatBox.appendChild(aiDiv);
-      const streamingSpan = aiDiv.querySelector(".streaming-text");
-      const copyBtn = aiDiv.querySelector(".copy-btn");
-
-      // Fetch streaming response from backend
-      const response = await fetch("/chat", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({message})
-      });
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let fullText = "";
-
-      // Read streamed chunks and update UI
-      while (true) {
-        if (stopStreaming) break;  // stop if user clicked stop
-        const {done, value} = await reader.read();
-        if (done) break;
-        const chunk = decoder.decode(value, {stream: true});
-        chunk.split("\n").forEach(line => {
-          if (line.startsWith("data:")) {
-            try {
-              const data = JSON.parse(line.slice(5));
-              if (data.response) {
-                fullText += data.response;
-                streamingSpan.innerHTML = marked.parse(fullText);
-                setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 0);
-              }
-            } catch (e) {}
-          }
-        });
-      }
-
-      loader.style.display = "none";
-      stopBtn.style.display = "none";
-      copyBtn.setAttribute("data-reply", encodeURIComponent(fullText));
-
-      // Render LaTeX if present
-      if (window.MathJax) MathJax.typesetPromise();
-      // Speak response if voice toggle is enabled
-      speakText(fullText);
-    }
-
-    // Called when user clicks Stop 
-    function stopChat() {
-      stopStreaming = true;
-      const loader = document.getElementById("loader");
-      const stopBtn = document.getElementById("stop-btn");
-      loader.style.display = "none";
-      stopBtn.style.display = "none";
-    }
-
-    // Copy AI response to clipboard
-    function copyResponse(btnElement) {
-      const rawText = decodeURIComponent(btnElement.getAttribute("data-reply"));
-      navigator.clipboard.writeText(rawText).then(() => {
-        btnElement.querySelector(".material-symbols-outlined").textContent = "done";
-        setTimeout(() => {
-          btnElement.querySelector(".material-symbols-outlined").textContent = "content_copy";
-        }, 1500);
-      });
-    }
-
-    // Initialize page on load
-    document.addEventListener("DOMContentLoaded", () => {
-      const input = document.getElementById("user-input");
-      input.addEventListener("keydown", function(event) {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          sendMessage();
-        }
-      });
-
-      // Restore saved theme
-      const themeLink = document.getElementById("theme-link");
-      const savedTheme = localStorage.getItem("selectedTheme");
-      if (savedTheme) {
-        themeLink.href = `/static/${savedTheme}`;
-      }
-
-      const chatBox = document.getElementById("chat-box");
-
-       // 🔥 Intro line as first AI message
-      const introDiv = document.createElement("div");
-      introDiv.className = "ai";
-      introDiv.innerHTML = `
-        <div class="ai-text">
-          <span class="gamma-symbol">&#x0393;:</span> I can see everything....
-        </div>
-      `;
-      chatBox.appendChild(introDiv);
-
-
-      // Load chat history from backend
-      fetch("/history")
-        .then(res => res.json())
-        .then(history => {
-          history.forEach(msg => {
-            const div = document.createElement("div");
-            div.className = msg.role;
-            if (msg.role === "ai") {
-              const formattedText = marked.parse(msg.text);
-              div.innerHTML = `
-                <div class="ai-text">
-                  <span class="gamma-symbol">&#x0393;:</span> ${formattedText}
-                </div>
-                <button class="copy-btn" data-reply="${encodeURIComponent(msg.text)}" onclick="copyResponse(this)">
-                  <span class="material-symbols-outlined">content_copy</span>
-                </button>
-              `;
-            } else {
-              div.className = "user";
-              div.textContent = msg.text;
-            }
-            chatBox.appendChild(div);
-          });
-          setTimeout(() => { chatBox.scrollTop = chatBox.scrollHeight; }, 0);
-          if (window.MathJax) MathJax.typesetPromise();
-        });
-    });
-
-    // Navigate to settings page
-    function openSettings() {
-      window.location.href = "/settings";
-    }
-
-    // Clear chat history
-    async function clearChat() {
-      const chatBox = document.getElementById("chat-box");
-      const response = await fetch("/clear_history", { method: "POST" });
-      const data = await response.json();
-      if (data.status === "success") {
-        chatBox.innerHTML = "";
-      }
-    }
-
-    // Toggle voice read-aloud
-    let readAloudEnabled = false;
-    function toggleReadAloud() {
-      const voiceIcon = document.querySelector(".voice-icon");
-      readAloudEnabled = !readAloudEnabled;
-      if (readAloudEnabled) {
-        voiceIcon.classList.add("voice-on");
-      } else {
-        voiceIcon.classList.remove("voice-on");
-        speechSynthesis.cancel();
-      }
-    }
-
-    // Speak AI response using browser TTS
-    function speakText(text) {
-      if (!readAloudEnabled || !text) return;
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "en-US";
-      utterance.rate = 1;
-      utterance.pitch = 1;
-
-      const voices = speechSynthesis.getVoices();
-      const preferred = voices.find(v => v.name.includes("Google") || v.name.includes("Microsoft"));
-      if (preferred) {
-        utterance.voice = preferred;
-      }
-
-      speechSynthesis.speak(utterance);
-    }
-  </script>
+    <!-- External script -->
+    <script src="{{ url_for('static', filename='js/chat_core.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chat_utils.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chat_voice.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chat_init.js') }}"></script>
 </body>
 </html>

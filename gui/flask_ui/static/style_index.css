@@ -1,0 +1,92 @@
+.top-controls {
+      position: absolute;
+      top: 20px;
+      right: 12px;
+      display: flex;
+      gap: 8px;
+    }
+    
+.top-controls span {
+  color: #cb9f0b;              /* neutral dark gray for visibility on light themes */
+  cursor: pointer;
+  font-size: 20px;
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+.top-controls span:hover {
+  color: #ffcc00;           /* retro neon highlight on hover */
+  transform: scale(1.2);    /* subtle zoom effect */
+}
+
+.settings-icon,
+.clear-icon,
+.voice-icon {
+  cursor: pointer;
+  font-size: 22px;
+  color: #ffcc00;
+  transition: transform 0.2s ease;
+}
+
+.settings-icon:hover,
+.clear-icon:hover,
+.voice-icon:hover {
+  transform: scale(1.2);
+}
+
+.screen-icon.cross::after {
+  content: "🚫";              /* cross mark */
+  position: absolute;
+  font-size: 14px;
+  color: red;
+  top: 0;
+  right: 0;
+}
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+  margin-left: 8px; /* spacing between icons */
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: max-content;
+  max-width: 160px;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  position: absolute;
+  z-index: 10;
+  top: 125%;       /* place below the icon */
+  left: -100%;
+  right: 0;
+  transform: translateX(-50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 10px;
+  pointer-events: none;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
+
+#stop-btn {
+  margin-left: 10px;
+  padding: 4px 8px;
+  background: #ff4444;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+#stop-btn:hover {
+  background: #cc0000;
+}
+
+.voice-icon.voice-on {
+  color: #00cc66; /* green when active */
+}
