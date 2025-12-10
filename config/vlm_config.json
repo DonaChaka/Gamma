@@ -1,5 +1,5 @@
 {
-    "model_name": "qwen3-vl:2b-instruct",
+    "model_name": "deepseek-ocr",
     "url": "http://localhost:11434/api/generate",
     "system_prompt": "",
     "options": {

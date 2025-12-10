@@ -42,6 +42,7 @@ if not os.path.exists(dist_dir):
 # -w: Disable the terminal window (use -c for console apps)
 command = [
     "pyinstaller",
+    "--onefile",
     "--distpath", dist_dir,
     "--workpath", build_dir,
     "--specpath", spec_path,
