@@ -28,6 +28,14 @@ body {
 
 h2 { margin: 0 0 12px 0; color: #111827; font-weight: 700; }
 
+h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.2em;
+    color: #111827;
+    text-shadow: 0 0 5px #111827;
+}
+
+
 #chat-box {
   flex: 1;
   overflow-y: auto;
