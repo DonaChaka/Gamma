@@ -22,3 +22,6 @@ dist/
 # Git files
 *.git
 .gitignore
+
+# Resources 
+resources/

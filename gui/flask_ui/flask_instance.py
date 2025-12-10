@@ -6,7 +6,25 @@ from store.db import init_db, add_message, get_history, clear_history
 
 app = Flask(__name__)
 
-vlm_client = OllamaClient(config_path="config/vlm_config.json")
+'''
+VLM Configuration example:
+{
+    "model_name": "qwen3-vl:2b-instruct",
+    "url": "http://localhost:11434/api/generate",
+    "system_prompt": "You are Gamma, a physics tutor. Always explain equations first, then text. Provide one concise explanation and then stop.",
+    "options": {
+            "temperature": 0.7,
+            "top_p": 0.9
+    },
+    "len_history": 0
+}
+len_history => How many previous exchanges to keep in context. 0 means no history.
+top_p => Nucleus sampling parameter. Indicates the cumulative probability threshold for token selection.
+temperature => Controls randomness in output
+
+'''
+config_path = r"C:\Users\Work.LAPTOP-JOMS87TS\Documents\Projects\Gamma\config\vlm_config.json"
+vlm_client = OllamaClient(config_path=config_path)
 vlm_client.start()
 
 # Initialize database on startup
