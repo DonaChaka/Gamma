@@ -2,6 +2,10 @@
 
 let screenShareEnabled = true;
 
+function openInfo() {
+  window.location.href = "/info";  
+}
+
 function toggleScreen() {
   const screenIcon = document.querySelector(".screen-icon");
   screenShareEnabled = !screenShareEnabled;

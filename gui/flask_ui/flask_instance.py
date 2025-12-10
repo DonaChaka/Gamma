@@ -66,6 +66,10 @@ def clear_history_route():
     clear_history()
     return jsonify({"status": "success"})
 
+@app.route("/info")
+def info():
+    return render_template("info.html")
+
 @app.route("/settings")
 def settings():
     return render_template("settings.html", current_model=vlm_client.get_model())

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Gamma Info</title>
+
+  <!-- Theme stylesheet (inherits current theme) -->
+  <link id="theme-link" rel="stylesheet" href="{{ url_for('static', filename='style_retro.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='fonts.css') }}">
+
+  <!-- Material Symbols -->
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+  <style>
+    .info-box {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    }
+
+    .info-card {
+    border: 2px solid currentColor;
+    border-radius: 8px;
+    padding: 12px;
+    background: rgba(255,255,255,0.02); /* subtle background, adapts to theme */
+    }
+
+    .info-card h3 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 0;
+    }
+
+    .info-card ul {
+    margin: 8px 0 0 16px;
+    padding: 0;
+    }
+
+    .badge {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    background: currentColor;
+    color: var(--dropdown-bg, #000);
+    }
+
+    .future {
+    border-color: #ffcc00; /* accent for future section */
+    box-shadow: 0 0 8px #ffcc00;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <!-- Header -->
+    <h2>
+      <span class="material-symbols-outlined">info</span> About
+    </h2>
+
+    <!-- Info content -->
+    <div id="chat-box" class="info-box">
+      
+      <!-- What Gamma does -->
+      <section class="info-card">
+        <h3><span class="material-symbols-outlined">psychology</span> What Gamma Does</h3>
+        <p>
+          Gamma is a visual assistant designed to automate workflows in a desktop environment.
+          It can also act as a study assistant, extracting screen contents and equations in an organized format.
+        </p>
+        <div class="badge">Screen Sharing Enabled</div>
+      </section>
+
+      <!-- Current Functionality -->
+      <section class="info-card">
+        <h3><span class="material-symbols-outlined">play_circle</span> Current Functionality</h3>
+        <ul>
+          <li>Explain what’s happening on your screen</li>
+          <li>Extract equations, text, and visuals in LaTeX format</li>
+          <li>Copy responses directly into your preferred app</li>
+        </ul>
+      </section>
+
+      <!-- Technology -->
+      <section class="info-card">
+        <h3><span class="material-symbols-outlined">memory</span> Technology Used</h3>
+        <p>
+          Gamma uses lightweight Visual Language Models (VLMs) in the range of <strong>1B–8B parameters</strong>.
+          This ensures smooth performance on edge devices and low‑powered hardware.
+        </p>
+      </section>
+
+      <!-- Future -->
+      <section class="info-card future">
+        <h3><span class="material-symbols-outlined">rocket_launch</span> Future Developments</h3>
+        <ul>
+          <li>GUI navigation and automation</li>
+          <li>Integration with TexWorks, Word, PowerPoint, and browsers</li>
+          <li>Seamless app interaction for productivity</li>
+        </ul>
+      </section>
+    </div>
+
+    <!-- Back button -->
+    <div class="input-area">
+        <button onclick="window.location.href='/'">Back to Gamma</button>
+    </div>
+  </div>
+
+<script>
+  const themeLink = document.getElementById("theme-link");
+  const savedTheme = localStorage.getItem("selectedTheme");
+  if (savedTheme) {
+    themeLink.href = `/static/${savedTheme}`;
+  }
+</script>
+</body>
+</html>

@@ -13,6 +13,14 @@ body {
 
 h2 { margin: 0 0 10px 0; color: #e2e8f0; }
 
+h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.2em;
+    color: #22d3ee;
+    text-shadow: 0 0 5px #22d3ee;
+}
+
+
 #chat-box {
   flex: 1; overflow-y: auto; border: 1px solid #0b0b0b; padding: 12px; background: #000;
   font-size: 15px; line-height: 1.6; margin-bottom: 12px; border-radius: 12px;

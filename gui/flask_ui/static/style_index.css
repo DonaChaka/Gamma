@@ -20,7 +20,7 @@
 
 .settings-icon,
 .clear-icon,
-.voice-icon {
+.voice-icon{
   cursor: pointer;
   font-size: 22px;
   color: #ffcc00;
@@ -31,6 +31,32 @@
 .clear-icon:hover,
 .voice-icon:hover {
   transform: scale(1.2);
+}
+
+.coffee-icon {
+  font-size: 22px;
+  color: #ffcc00; /* retro yellow */
+  cursor: pointer;
+  position: relative; /* anchor for pseudo-element */
+}
+
+/* Steam effect */
+.coffee-icon::after {
+  content: "☁";             /* wavy steam line */
+  position: absolute;
+  top: -12px;                /* above the cup */
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 14px;
+  color: #ffcc00;              /* white steam */
+  opacity: 0;
+  animation: rise 2s infinite ease-in-out;
+}
+
+@keyframes rise {
+  0%   { transform: translate(-50%, 0); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translate(-50%, -12px); opacity: 0; }
 }
 
 .screen-icon.cross::after {

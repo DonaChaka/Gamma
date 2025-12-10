@@ -37,6 +37,13 @@ h2 {
     text-shadow: 0 0 5px #ffcc00;
 }
 
+h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.2em;
+    color: #00ffff;
+    text-shadow: 0 0 5px #00ffff;
+}
+
 /* Chat box grows to fill available space */
 #chat-box {
     flex: 1;                /* expand to fill vertical space */

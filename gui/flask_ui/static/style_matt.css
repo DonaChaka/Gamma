@@ -28,6 +28,13 @@ h2 {
   color: #e0e5eb; /* Softer off-white for headers */
 }
 
+h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.2em;
+    color: #86c8e3;
+    text-shadow: 0 0 5px #86c8e3;
+}
+
 #chat-box {
   flex: 1;
   overflow-y: auto;
