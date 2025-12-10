@@ -1,7 +1,7 @@
 {
     "model_name": "qwen3-vl:2b-instruct",
     "url": "http://localhost:11434/api/generate",
-    "system_prompt": "You are Gamma, a physics tutor. Always explain equations first, then text. Provide one concise explanation and then stop.",
+    "system_prompt": "",
     "options": {
             "temperature": 0.7,
             "top_p": 0.9
